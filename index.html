@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NOVA | The Future of Consensus</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Space Grotesk', 'sans-serif'],
+                    },
+                    colors: {
+                        deep: '#000000', // Pure black base
+                    },
+                    animation: {
+                        'pulse-glow': 'pulseGlow 4s infinite',
+                        'float': 'float 8s ease-in-out infinite',
+                        'blob': 'blob 15s infinite alternate',
+                        'shimmer': 'shimmer 4s linear infinite',
+                    },
+                    keyframes: {
+                        pulseGlow: {
+                            '0%, 100%': { opacity: '0.8', transform: 'scale(1)' },
+                            '50%': { opacity: '1', transform: 'scale(1.05)' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        blob: {
+                            '0%': { transform: 'translate(0, 0) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0, 0) scale(1)' },
+                        },
+                        shimmer: {
+                            '0%': { backgroundPosition: '0% 50%' },
+                            '100%': { backgroundPosition: '100% 50%' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* CORE STYLES */
+        html,
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+            scroll-behavior: smooth;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* BACKGROUND LAYERS */
+        #background-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            /* Increased blur for smoother fade */
+            opacity: 0.25;
+            mix-blend-mode: screen;
+            /* Blends nicely on black */
+            transition: all 1s ease-in-out;
+            /* Smooth transition */
+        }
+
+        /* Canvas */
+        #nova-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            opacity: 0.8;
+        }
+
+        /* UPDATED BLOBS - Blue, Red, Yellow */
+        .blob-blue {
+            top: -10%;
+            left: -10%;
+            width: 500px;
+            height: 500px;
+            background: #2563eb;
+            /* Blue */
+            animation: blob 20s infinite alternate;
+        }
+
+        .blob-red {
+            top: 40%;
+            right: -15%;
+            width: 400px;
+            height: 400px;
+            background: #dc2626;
+            /* Red */
+            animation: blob 25s infinite alternate-reverse;
+        }
+
+        .blob-yellow {
+            bottom: -10%;
+            left: 10%;
+            width: 550px;
+            height: 550px;
+            background: #eab308;
+            /* Yellow */
+            animation: blob 30s infinite alternate;
+        }
+
+        /* APP CONTAINER */
+        #app-wrapper {
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+            position: relative;
+            z-index: 10;
+            background: transparent;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+            overflow-x: hidden;
+            border-left: 1px solid rgba(255, 255, 255, 0.03);
+            border-right: 1px solid rgba(255, 255, 255, 0.03);
+            padding-bottom: 130px;
+        }
+
+        /* GLASSMORPHISM - Darker & Cleaner */
+        .glass-card {
+            background: rgba(10, 10, 15, 0.7);
+            /* Darker transparency */
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .glass-card:active {
+            transform: scale(0.98);
+        }
+
+        /* TEXT STYLES */
+        .text-gradient-shimmer {
+            background: linear-gradient(to right, #22d3ee, #c084fc, #e879f9, #22d3ee);
+            background-size: 300% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 4s linear infinite;
+        }
+
+        /* BUTTON STYLES */
+        .btn-launch {
+            width: 100%;
+            padding: 14px;
+            border-radius: 16px;
+            font-weight: 700;
+            font-size: 1rem;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            border: none;
+            text-decoration: none;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-launch:active {
+            transform: scale(0.96);
+        }
+
+        /* THEME GRADIENTS */
+        .theme-cyan {
+            background: linear-gradient(135deg, #0891b2, #2563eb);
+            box-shadow: 0 4px 20px rgba(8, 145, 178, 0.4);
+        }
+
+        .theme-orange {
+            background: linear-gradient(135deg, #ea580c, #d97706);
+            box-shadow: 0 4px 20px rgba(234, 88, 12, 0.4);
+        }
+
+        .theme-fuchsia {
+            background: linear-gradient(135deg, #c026d3, #9333ea);
+            box-shadow: 0 4px 20px rgba(192, 38, 211, 0.4);
+        }
+
+        .theme-emerald {
+            background: linear-gradient(135deg, #059669, #0d9488);
+            box-shadow: 0 4px 20px rgba(5, 150, 105, 0.4);
+        }
+
+        /* FEATURE LIST */
+        .feature-list li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #e2e8f0;
+            font-size: 0.9rem;
+        }
+
+        .feature-list li::before {
+            content: '▹';
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        /* NAVBAR */
+        .system-nav {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 432px;
+            height: 70px;
+            background: rgba(5, 5, 10, 0.9);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            padding: 0 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 50;
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7);
+        }
+
+        .nav-btn {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 15px;
+            color: #64748b;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            font-size: 1.3rem;
+        }
+
+        .nav-btn.active {
+            color: #fff;
+            transform: translateY(-6px) scale(1.1);
+        }
+
+        /* Theme Colors */
+        .theme-cyan-icon {
+            color: #22d3ee;
+        }
+
+        .theme-orange-icon {
+            color: #fb923c;
+        }
+
+        .theme-fuchsia-icon {
+            color: #e879f9;
+        }
+
+        .theme-emerald-icon {
+            color: #34d399;
+        }
+
+        .nav-btn.active.theme-cyan-icon {
+            background: rgba(34, 211, 238, 0.15);
+            color: #22d3ee;
+            box-shadow: 0 0 20px rgba(34, 211, 238, 0.3);
+        }
+
+        .nav-btn.active.theme-orange-icon {
+            background: rgba(251, 146, 60, 0.15);
+            color: #fb923c;
+            box-shadow: 0 0 20px rgba(251, 146, 60, 0.3);
+        }
+
+        .nav-btn.active.theme-fuchsia-icon {
+            background: rgba(232, 121, 249, 0.15);
+            color: #e879f9;
+            box-shadow: 0 0 20px rgba(232, 121, 249, 0.3);
+        }
+
+        .nav-btn.active.theme-emerald-icon {
+            background: rgba(52, 211, 153, 0.15);
+            color: #34d399;
+            box-shadow: 0 0 20px rgba(52, 211, 153, 0.3);
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .loader-step {
+            opacity: 0;
+            display: none;
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .loader-step.active {
+            opacity: 1;
+            display: flex;
+        }
+
+        /* FOOTER GLASS FIX */
+        footer {
+            background: rgba(10, 10, 15, 0.6);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- BACKGROUND LAYER -->
+    <div id="background-layer">
+        <div class="blob blob-blue"></div>
+        <div class="blob blob-red"></div>
+        <div class="blob blob-yellow"></div>
+        <canvas id="nova-canvas"></canvas>
+    </div>
+
+    <!-- APP WRAPPER -->
+    <div id="app-wrapper">
+
+        <!-- PRELOADER -->
+        <div id="preloader"
+            class="fixed inset-0 bg-black z-[9999] flex flex-col items-center justify-center transition-opacity duration-700">
+            <div id="step-icon" class="loader-step active flex-col items-center justify-center">
+                <div
+                    class="w-20 h-20 rounded-full bg-gradient-to-br from-violet-600 to-fuchsia-600 flex items-center justify-center shadow-[0_0_40px_rgba(168,85,247,0.6)] animate-pulse-glow">
+                    <i class="fa-solid fa-atom text-3xl text-white animate-spin-slow"></i>
+                </div>
+            </div>
+            <div id="step-title" class="loader-step flex-col items-center justify-center mt-6">
+                <h1
+                    class="font-display text-6xl font-bold tracking-widest text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.4)]">
+                    NOVA</h1>
+            </div>
+            <div id="step-subtitle" class="loader-step flex-col items-center justify-center mt-4">
+                <p class="text-center text-slate-300 font-light text-lg tracking-wide">Next-Gen Opinion<br>and Voting
+                    Arena</p>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <main id="main-content" class="opacity-0 transition-opacity duration-1000">
+
+            <!-- HERO SECTION -->
+            <header class="relative min-h-[90vh] flex flex-col justify-center items-center text-center px-6 pt-10">
+
+                <div class="mb-8 animate-float">
+                    <div
+                        class="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center shadow-[0_0_30px_rgba(168,85,247,0.5)] mx-auto border border-white/20">
+                        <i class="fa-solid fa-check-to-slot text-2xl text-white"></i>
+                    </div>
+                </div>
+
+                <h1
+                    class="font-display text-7xl font-bold mb-2 leading-tight text-white drop-shadow-2xl tracking-tight">
+                    NOVA</h1>
+                <h2 class="font-display text-xl font-bold mb-6 text-gradient-shimmer tracking-wide uppercase">The Future
+                    of Consensus</h2>
+
+                <p class="text-slate-300 text-sm md:text-base max-w-[280px] mx-auto leading-relaxed mb-8">
+                    Multi-tier voting ecosystem powered by Zero-Knowledge Proofs and Immutable JSON-Chains.
+                </p>
+
+                <a href="#edu"
+                    class="px-6 py-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-bold uppercase tracking-widest transition-all backdrop-blur-md">
+                    Start Exploring
+                </a>
+            </header>
+
+            <!-- 1. EDUCATION SYSTEM (Cyan) -->
+            <section id="edu" class="relative px-5 py-8 reveal">
+                <div class="glass-card rounded-3xl p-6 overflow-hidden relative border-t-2 border-cyan-500/50">
+                    <div
+                        class="absolute -right-10 -top-10 w-32 h-32 bg-cyan-500/20 blur-[50px] rounded-full pointer-events-none">
+                    </div>
+
+                    <div class="flex items-center gap-4 mb-6">
+                        <div
+                            class="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30 shrink-0">
+                            <i class="fa-solid fa-graduation-cap text-2xl text-white"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-display text-2xl font-bold text-white">Education</h2>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                                <span class="text-xs text-cyan-300 uppercase tracking-wider font-bold">NOVA EDEN</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="text-slate-300 text-sm leading-relaxed mb-6">
+                        Designed for schools and universities to conduct student council elections with high engagement.
+                    </p>
+
+                    <ul class="feature-list mb-8 text-sm text-cyan-100">
+                        <li>Digital UViD Generation</li>
+                        <li>Gamified Student Dashboards</li>
+                        <li>QR-Based Booth Authentication</li>
+                        <li>Live Result Streaming</li>
+                    </ul>
+
+                    <a href="https://team-ielect.github.io/eden/" onclick="launchSystem(this, 'Education')"
+                        class="btn-launch theme-cyan">
+                        Launch System <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+            </section>
+
+            <!-- 2. POLITICAL SYSTEM (Orange) -->
+            <section id="pol" class="relative px-5 py-8 reveal">
+                <div class="glass-card rounded-3xl p-6 overflow-hidden relative border-t-2 border-orange-500/50">
+                    <div
+                        class="absolute -left-10 -bottom-10 w-32 h-32 bg-orange-500/20 blur-[50px] rounded-full pointer-events-none">
+                    </div>
+
+                    <div class="flex items-center gap-4 mb-6">
+                        <div
+                            class="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-600 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/30 shrink-0">
+                            <i class="fa-solid fa-landmark text-2xl text-white"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-display text-2xl font-bold text-white">Political</h2>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-orange-400"></span>
+                                <span class="text-xs text-orange-300 uppercase tracking-wider font-bold">NOVA
+                                    CIVIX</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="text-slate-300 text-sm leading-relaxed mb-6">
+                        The fortress of the Nova ecosystem. Built for municipal and national elections where security is
+                        paramount.
+                    </p>
+
+                    <ul class="feature-list mb-8 text-sm text-orange-100">
+                        <li>Zero-Knowledge Identity Tokens</li>
+                        <li>Biometric & Physical ID Verification</li>
+                        <li>Isolated Voting Terminals</li>
+                        <li>Publicly Auditable JSON-Chain</li>
+                    </ul>
+
+                    <a href="https://team-ielect.github.io/civix/" onclick="launchSystem(this, 'Political')"
+                        class="btn-launch theme-orange">
+                        Launch System <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+            </section>
+
+            <!-- 3. CORPORATE SYSTEM (Fuchsia) -->
+            <section id="corp" class="relative px-5 py-8 reveal">
+                <div class="glass-card rounded-3xl p-6 overflow-hidden relative border-t-2 border-fuchsia-500/50">
+                    <div
+                        class="absolute -right-10 -top-10 w-32 h-32 bg-fuchsia-500/20 blur-[50px] rounded-full pointer-events-none">
+                    </div>
+
+                    <div class="flex items-center gap-4 mb-6">
+                        <div
+                            class="w-14 h-14 rounded-2xl bg-gradient-to-br from-fuchsia-600 to-purple-500 flex items-center justify-center shadow-lg shadow-fuchsia-500/30 shrink-0">
+                            <i class="fa-solid fa-building text-2xl text-white"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-display text-2xl font-bold text-white">Corporate</h2>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-fuchsia-400"></span>
+                                <span class="text-xs text-fuchsia-300 uppercase tracking-wider font-bold">NOVA
+                                    SYNTHEX</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="text-slate-300 text-sm leading-relaxed mb-6">
+                        Secure decision making for boards and employees. Enable whistleblowing and honest feedback
+                        through absolute anonymity.
+                    </p>
+
+                    <ul class="feature-list mb-8 text-sm text-fuchsia-100">
+                        <li>Strict Corporate Email SSO</li>
+                        <li>Weighted Voting Rights</li>
+                        <li>Anonymous "Whistleblower" Box</li>
+                        <li>Real-time Sentiment Analytics</li>
+                    </ul>
+
+                    <a href="https://alanbose-dev.github.io/NOVA-SYNTHEX/" onclick="launchSystem(this, 'Corporate')"
+                        class="btn-launch theme-fuchsia">
+                        Launch System <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+            </section>
+
+            <!-- 4. ASSOCIATION SYSTEM (Emerald) -->
+            <section id="assoc" class="relative px-5 py-8 reveal">
+                <div class="glass-card rounded-3xl p-6 overflow-hidden relative border-t-2 border-emerald-500/50">
+                    <div
+                        class="absolute -left-10 -bottom-10 w-32 h-32 bg-emerald-500/20 blur-[50px] rounded-full pointer-events-none">
+                    </div>
+
+                    <div class="flex items-center gap-4 mb-6">
+                        <div
+                            class="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30 shrink-0">
+                            <i class="fa-solid fa-users text-2xl text-white"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-display text-2xl font-bold text-white">Association</h2>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                <span class="text-xs text-emerald-300 uppercase tracking-wider font-bold">NOVA
+                                    TRIBUNE</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="text-slate-300 text-sm leading-relaxed mb-6">
+                        Flexible voting for Housing Societies, NGOs, and Sports Clubs. Handles complex scenarios like
+                        proxy voting.
+                    </p>
+
+                    <ul class="feature-list mb-8 text-sm text-emerald-100">
+                        <li>Proxy Vote Delegation</li>
+                        <li>Hybrid Polling</li>
+                        <li>Panel Selection Logic</li>
+                        <li>Membership Fee Validation</li>
+                    </ul>
+
+                    <a href="https://team-ielect.github.io/tribune/" onclick="launchSystem(this, 'Association')"
+                        class="btn-launch theme-emerald">
+                        Launch System <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+            </section>
+
+            <!-- TECH SECTION -->
+            <section class="relative px-5 py-10 reveal">
+                <div class="text-center mb-8">
+                    <h2 class="font-display text-2xl font-bold mb-2 text-white">Core Engine</h2>
+                    <p class="text-xs text-slate-400 uppercase tracking-widest">Powered by FireChain</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="glass-card p-5 rounded-2xl flex items-start gap-4 border-l-4 border-l-cyan-500">
+                        <div
+                            class="w-10 h-10 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-fingerprint text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-display font-bold text-white mb-1">Zero-Knowledge Proof</h3>
+                            <p class="text-xs text-slate-400 leading-relaxed">Verify eligibility without revealing
+                                identity.</p>
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-5 rounded-2xl flex items-start gap-4 border-l-4 border-l-fuchsia-500">
+                        <div
+                            class="w-10 h-10 rounded-lg bg-fuchsia-500/10 text-fuchsia-400 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-link text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-display font-bold text-white mb-1">Immutable Chain</h3>
+                            <p class="text-xs text-slate-400 leading-relaxed">Tamper-proof JSON-Chain ledger.</p>
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-5 rounded-2xl flex items-start gap-4 border-l-4 border-l-emerald-500">
+                        <div
+                            class="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-server text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-display font-bold text-white mb-1">Decentralized Storage</h3>
+                            <p class="text-xs text-slate-400 leading-relaxed">Sharded data across secure nodes.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FOOTER (Fixed Glass Styling) -->
+            <footer
+                class="pt-12 pb-28 px-6 text-center rounded-t-3xl mt-8 border-t border-white/5 backdrop-blur-xl bg-black/20">
+                <div class="flex items-center justify-center gap-2 mb-4">
+                    <i class="fa-solid fa-atom text-fuchsia-500 text-2xl"></i>
+                    <span class="font-display font-bold text-2xl tracking-wide text-white">NOVA</span>
+                </div>
+                <p class="text-slate-400 text-xs mb-6 max-w-[200px] mx-auto leading-relaxed">
+                    Secured by FireChain Technology. The future is transparent.
+                </p>
+                <div class="flex justify-center gap-4">
+                    <a href="#"
+                        class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:bg-fuchsia-600 hover:text-white transition-all">
+                        <i class="fa-brands fa-github"></i>
+                    </a>
+                    <a href="#"
+                        class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:bg-cyan-500 hover:text-white transition-all">
+                        <i class="fa-brands fa-twitter"></i>
+                    </a>
+                </div>
+                <p class="text-slate-600 text-[10px] mt-8">&copy; 2025 Nova Systems. All rights reserved.</p>
+            </footer>
+
+        </main>
+
+        <!-- NAVBAR -->
+        <nav class="system-nav">
+            <a href="#edu" onclick="setActive(this)" class="nav-btn theme-cyan-icon" id="nav-edu">
+                <i class="fa-solid fa-graduation-cap"></i>
+            </a>
+            <a href="#pol" onclick="setActive(this)" class="nav-btn theme-orange-icon" id="nav-pol">
+                <i class="fa-solid fa-landmark"></i>
+            </a>
+            <a href="#corp" onclick="setActive(this)" class="nav-btn theme-fuchsia-icon" id="nav-corp">
+                <i class="fa-solid fa-building"></i>
+            </a>
+            <a href="#assoc" onclick="setActive(this)" class="nav-btn theme-emerald-icon" id="nav-assoc">
+                <i class="fa-solid fa-users"></i>
+            </a>
+        </nav>
+
+    </div>
+
+    <!-- LOGIC -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const overlay = document.getElementById('preloader');
+            const mainContent = document.getElementById('main-content');
+
+            // Check session storage to see if we have visited before in this session
+            const hasVisited = sessionStorage.getItem('nova_visited');
+
+            if (!hasVisited) {
+                // First visit: Show full animation
+                setTimeout(() => {
+                    document.getElementById('step-icon').classList.remove('active');
+                    document.getElementById('step-title').classList.add('active');
+                }, 1000);
+
+                setTimeout(() => {
+                    document.getElementById('step-title').classList.remove('active');
+                    document.getElementById('step-subtitle').classList.add('active');
+                }, 2000);
+
+                setTimeout(() => {
+                    overlay.style.opacity = '0';
+                    setTimeout(() => {
+                        overlay.style.display = 'none';
+                        mainContent.classList.remove('opacity-0');
+                        checkReveal();
+                        sessionStorage.setItem('nova_visited', 'true');
+                    }, 700);
+                }, 3200);
+            } else {
+                // Returning visit: Skip loading immediately
+                overlay.style.display = 'none';
+                mainContent.classList.remove('opacity-0');
+                checkReveal();
+            }
+        });
+
+        function checkReveal() {
+            const reveals = document.querySelectorAll('.reveal');
+            const windowHeight = window.innerHeight;
+            const elementVisible = 50;
+
+            reveals.forEach((reveal) => {
+                const elementTop = reveal.getBoundingClientRect().top;
+                if (elementTop < windowHeight - elementVisible) {
+                    reveal.classList.add('active');
+                }
+            });
+        }
+        window.addEventListener('scroll', checkReveal);
+
+        const navBtns = {
+            'edu': { el: document.getElementById('nav-edu') },
+            'pol': { el: document.getElementById('nav-pol') },
+            'corp': { el: document.getElementById('nav-corp') },
+            'assoc': { el: document.getElementById('nav-assoc') }
+        };
+
+        function setActive(element) {
+            Object.values(navBtns).forEach(btn => btn.el.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        window.addEventListener('scroll', () => {
+            const sections = ['edu', 'pol', 'corp', 'assoc'];
+            let current = '';
+
+            sections.forEach(section => {
+                const element = document.getElementById(section);
+                if (element) {
+                    const sectionTop = element.offsetTop;
+                    if (scrollY >= (sectionTop - 300)) {
+                        current = section;
+                    }
+                }
+            });
+
+            Object.values(navBtns).forEach(btn => {
+                const btnHref = btn.el.getAttribute('href').replace('#', '');
+                if (btnHref === current) {
+                    btn.el.classList.add('active');
+                } else {
+                    btn.el.classList.remove('active');
+                }
+            });
+        });
+
+        function launchSystem(btn, systemName) {
+            event.preventDefault();
+            const originalContent = btn.innerHTML;
+            const targetUrl = btn.href;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Launching...`;
+
+            setTimeout(() => {
+                btn.innerHTML = `<i class="fa-solid fa-check"></i> Redirecting...`;
+                setTimeout(() => {
+                    window.location.href = targetUrl;  // <-- ADD THIS
+                }, 1000);
+            }, 800);
+        }
+
+        /* --- UPDATED SMOOTH & INTERACTIVE PARTICLE SYSTEM --- */
+        const canvas = document.getElementById('nova-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, particles = [];
+        let bursts = []; // For touch burst effects
+
+        const particleCount = 45; // Optimized count
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        const pointer = { x: null, y: null };
+
+        window.addEventListener('mousemove', (e) => { pointer.x = e.x; pointer.y = e.y; });
+        window.addEventListener('mouseleave', () => { pointer.x = null; pointer.y = null; });
+
+        // Add burst on touch/click
+        const spawnBurst = (x, y) => {
+            for (let i = 0; i < 12; i++) { // Increased burst count for better effect
+                bursts.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 6,
+                    vy: (Math.random() - 0.5) * 6,
+                    life: 1.0,
+                    color: ['#ffffff', '#22d3ee', '#c084fc'][Math.floor(Math.random() * 3)]
+                });
+            }
+        };
+
+        window.addEventListener('touchstart', (e) => {
+            pointer.x = e.touches[0].clientX;
+            pointer.y = e.touches[0].clientY;
+            spawnBurst(pointer.x, pointer.y);
+        });
+        window.addEventListener('touchmove', (e) => {
+            pointer.x = e.touches[0].clientX;
+            pointer.y = e.touches[0].clientY;
+        });
+        window.addEventListener('touchend', () => { pointer.x = null; pointer.y = null; });
+        window.addEventListener('mousedown', (e) => {
+            pointer.x = e.x;
+            pointer.y = e.y;
+            spawnBurst(pointer.x, pointer.y);
+        });
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 0.3; // Slow smooth movement
+                this.vy = (Math.random() - 0.5) * 0.3;
+                this.size = Math.random() * 1.5 + 0.8; // Slightly larger dots
+                // Neutral white/silver colors to match dark background
+                const colors = ['#ffffff', '#cbd5e1', '#94a3b8'];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+            }
+            update() {
+                // Base movement
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Wall bounce - smooth reflection
+                if (this.x < 0 || this.x > width) this.vx *= -1;
+                if (this.y < 0 || this.y > height) this.vy *= -1;
+
+                // Interaction: Gentle Avoidance/Attraction (Swarm effect)
+                // Kept subtle to maintain "calm" feel
+                if (pointer.x != null) {
+                    const dx = pointer.x - this.x;
+                    const dy = pointer.y - this.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < 200) {
+                        const forceDirectionX = dx / distance;
+                        const forceDirectionY = dy / distance;
+                        const force = (200 - distance) / 200;
+
+                        const directionX = forceDirectionX * force * 0.03;
+                        const directionY = forceDirectionY * force * 0.03;
+
+                        this.vx += directionX;
+                        this.vy += directionY;
+                    }
+                }
+
+                // Friction to keep movement smooth
+                this.vx *= 0.99;
+                this.vy *= 0.99;
+
+                // Minimum speed maintenance
+                const currentSpeed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                if (currentSpeed < 0.1) {
+                    this.vx *= 1.05;
+                    this.vy *= 1.05;
+                }
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = 0.6; // Softer dots
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+            }
+        }
+
+        for (let i = 0; i < particleCount; i++) particles.push(new Particle());
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+
+            // Draw and Update Particles
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+
+                // --- REMOVED CONNECTION LINES LOGIC ---
+                // Particles now exist independently as requested
+            }
+
+            // Draw and Update Bursts
+            for (let i = bursts.length - 1; i >= 0; i--) {
+                let b = bursts[i];
+                b.x += b.vx;
+                b.y += b.vy;
+                b.life -= 0.03; // Fade out speed
+
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, 2, 0, Math.PI * 2);
+                ctx.fillStyle = b.color;
+                ctx.globalAlpha = b.life;
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+
+                if (b.life <= 0) bursts.splice(i, 1);
+            }
+
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+</body>
+
+</html>
